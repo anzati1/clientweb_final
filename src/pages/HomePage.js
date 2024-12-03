@@ -18,7 +18,6 @@ const HomePage = ({ addToCart }) => {
                     api.getAllProducts(),
                     api.getCategories()
                 ]);
-                // Add original price for demo
                 const productsWithOriginalPrice = productsData.map(product => ({
                     ...product,
                     originalPrice: (product.price * 1.2).toFixed(2)

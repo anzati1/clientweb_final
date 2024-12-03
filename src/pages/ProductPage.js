@@ -11,7 +11,6 @@ const ProductPage = ({ addToCart }) => {
         const fetchProduct = async () => {
             try {
                 const data = await api.getProductById(id);
-                // Add mock original price and availability for demo
                 data.originalPrice = (data.price * 1.2).toFixed(2);
                 data.availability = "In Stock";
                 data.qrCode = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=product" + data.id;

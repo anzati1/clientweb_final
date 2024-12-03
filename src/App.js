@@ -54,7 +54,6 @@ function App() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    // Handle search logic here
   };
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);

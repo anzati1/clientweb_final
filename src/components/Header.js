@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-// Import the logo using a relative path from the assets directory
 import logo from '../assets/logo.png';
 
 const Header = ({ searchQuery, setSearchQuery, handleSearch, cartItemCount }) => {
