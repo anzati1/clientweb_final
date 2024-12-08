@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import ProductPage from './pages/ProductPage';
 import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
+import OrderConfirmationPage from './pages/OrderConfirmationPage';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -82,6 +84,8 @@ function App() {
                 />
               } 
             />
+            <Route path="/checkout" element={<CheckoutPage cart={cart} />} />
+            <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
           </Routes>
         </main>
 

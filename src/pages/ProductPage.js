@@ -6,6 +6,29 @@ const ProductPage = ({ addToCart }) => {
     const { id } = useParams();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [reviews] = useState([
+        {
+            id: 1,
+            user: "John D.",
+            rating: 4,
+            comment: "Great product, exactly as described!",
+            date: "2024-02-15"
+        },
+        {
+            id: 2,
+            user: "Sarah M.",
+            rating: 5,
+            comment: "Excellent quality and fast shipping.",
+            date: "2024-02-10"
+        },
+        {
+            id: 3,
+            user: "Mike R.",
+            rating: 3,
+            comment: "Good product but delivery took longer than expected.",
+            date: "2024-02-05"
+        }
+    ]);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -96,6 +119,35 @@ const ProductPage = ({ addToCart }) => {
                             alt="Product QR Code"
                             style={{ width: '128px', height: '128px' }}
                         />
+                    </div>
+
+                    <div className="row mt-5">
+                        <div className="col-12">
+                            <h3>Customer Reviews</h3>
+                            <div className="mb-4">
+                                <div className="d-flex align-items-center mb-2">
+                                    <h4 className="mb-0 me-2">{product.rating.rate}</h4>
+                                    <div>{renderStars(product.rating.rate)}</div>
+                                    <span className="ms-2 text-muted">Based on {product.rating.count} reviews</span>
+                                </div>
+                            </div>
+                            {reviews.map(review => (
+                                <div key={review.id} className="card mb-3">
+                                    <div className="card-body">
+                                        <div className="d-flex justify-content-between mb-2">
+                                            <div>
+                                                <strong>{review.user}</strong>
+                                                <div className="text-warning">
+                                                    {renderStars(review.rating)}
+                                                </div>
+                                            </div>
+                                            <small className="text-muted">{review.date}</small>
+                                        </div>
+                                        <p className="card-text">{review.comment}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
