@@ -37,6 +37,7 @@ const ProductPage = ({ addToCart }) => {
                 data.originalPrice = (data.price * 1.2).toFixed(2);
                 data.availability = "In Stock";
                 data.qrCode = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=product" + data.id;
+                data.image = data.thumbnail || data.image;
                 setProduct(data);
             } catch (error) {
                 console.error('Error fetching product:', error);
@@ -81,10 +82,10 @@ const ProductPage = ({ addToCart }) => {
             <div className="row">
                 <div className="col-md-6">
                     <img 
-                        src={product.image} 
-                        className="img-fluid" 
+                        src={product.thumbnail} 
+                        className="card-img-top p-3" 
                         alt={product.title}
-                        style={{ maxHeight: '500px', objectFit: 'contain' }}
+                        style={{ height: '200px', objectFit: 'contain' }}
                     />
                 </div>
                 <div className="col-md-6">
