@@ -165,3 +165,24 @@
   font-size: 0.75rem;
   padding: 0.35em 0.65em;
 }
+
+.footer-social-link {
+    transition: opacity 0.2s ease;
+}
+
+.footer-social-link:hover {
+    opacity: 0.8;
+}
+
+.footer-links li {
+    margin-bottom: 0.8rem;
+}
+
+.footer-links a {
+    transition: color 0.2s ease;
+    padding: 0.3rem 0;
+}
+
+.footer-links a:hover {
+    color: #007bff !important;
+}

@@ -1,8 +1,13 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const CartPage = ({ cart, updateQuantity, removeFromCart }) => {
+    const navigate = useNavigate();
     const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    const handleCheckout = () => {
+        navigate('/checkout');
+    };
 
     if (cart.length === 0) {
         return (
@@ -92,7 +97,10 @@ const CartPage = ({ cart, updateQuantity, removeFromCart }) => {
                                 <span className="h5">Total</span>
                                 <span className="h5">${total.toFixed(2)}</span>
                             </div>
-                            <button className="btn btn-primary w-100">
+                            <button 
+                                className="btn btn-primary w-100"
+                                onClick={handleCheckout}
+                            >
                                 Proceed to Checkout
                             </button>
                         </div>

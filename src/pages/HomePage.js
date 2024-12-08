@@ -3,11 +3,10 @@ import { api } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import './HomePage.css';
 
-const HomePage = ({ addToCart }) => {
+const HomePage = ({ addToCart, searchQuery }) => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('');
-    const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -22,8 +21,11 @@ const HomePage = ({ addToCart }) => {
                     ...product,
                     originalPrice: (product.price * 1.2).toFixed(2)
                 }));
+                const formattedCategories = categoriesData.map(category => 
+                    typeof category === 'object' ? category.name : category
+                );
                 setProducts(productsWithOriginalPrice);
-                setCategories(categoriesData);
+                setCategories(formattedCategories);
             } catch (error) {
                 console.error('Error fetching data:', error);
             } finally {
@@ -75,8 +77,8 @@ const HomePage = ({ addToCart }) => {
                         onChange={(e) => setSelectedCategory(e.target.value)}
                     >
                         <option value="">All Categories</option>
-                        {categories.map(category => (
-                            <option key={category} value={category}>
+                        {categories.map((category, index) => (
+                            <option key={index} value={category}>
                                 {category}
                             </option>
                         ))}
@@ -89,7 +91,7 @@ const HomePage = ({ addToCart }) => {
                     <div key={product.id} className="col">
                         <div className="product-card card h-100">
                             <img 
-                                src={product.image} 
+                                src={product.thumbnail} 
                                 className="card-img-top p-3" 
                                 alt={product.title}
                                 style={{ height: '200px', objectFit: 'contain' }}
@@ -97,8 +99,8 @@ const HomePage = ({ addToCart }) => {
                             <div className="card-body d-flex flex-column">
                                 <h5 className="card-title product-title">{product.title}</h5>
                                 <div className="rating mb-2">
-                                    {renderStars(product.rating.rate)}
-                                    <span className="text-muted ms-2">({product.rating.count} reviews)</span>
+                                    {renderStars(product.rating)}
+                                    <span className="text-muted ms-2">({product.stock} in stock)</span>
                                 </div>
                                 <div className="price-section mb-3">
                                     <span className="text-success me-2">${product.price.toFixed(2)}</span>
