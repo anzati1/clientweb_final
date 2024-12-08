@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
+import './ProductPage.css';
 
 const ProductPage = ({ addToCart }) => {
     const { id } = useParams();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [reviews] = useState([
+    const [reviews, setReviews] = useState([
         {
             id: 1,
             user: "John D.",
@@ -29,6 +30,10 @@ const ProductPage = ({ addToCart }) => {
             date: "2024-02-05"
         }
     ]);
+    const [newReview, setNewReview] = useState({
+        rating: 5,
+        comment: ''
+    });
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -62,6 +67,86 @@ const ProductPage = ({ addToCart }) => {
         }
         return stars;
     };
+
+    // Calculate average rating
+    const calculateAverageRating = () => {
+        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+        return (totalRating / reviews.length).toFixed(1);
+    };
+
+    // Handle review submission
+    const handleReviewSubmit = (e) => {
+        e.preventDefault();
+        const review = {
+            id: reviews.length + 1,
+            user: newReview.user || "Anonymous",
+            rating: parseInt(newReview.rating),
+            comment: newReview.comment,
+            date: new Date().toLocaleDateString()
+        };
+        setReviews([...reviews, review]);
+        setNewReview({ rating: 1, comment: '', user: '' });
+    };
+
+    // Add this helper function after renderStars
+    const renderEmptyStars = (onClick) => {
+        return [...Array(5)].map((_, index) => (
+            <span 
+                key={index} 
+                className={`star ${index < 1 ? 'filled' : 'empty'}`}
+                onClick={() => onClick(index + 1)}
+                style={{ cursor: 'pointer' }}
+            >
+                {index < 1 ? '★' : '☆'}
+            </span>
+        ));
+    };
+
+    // Replace the existing reviewForm with this updated version
+    const reviewForm = (
+        <div className="mt-4">
+            <h4>Leave a Review</h4>
+            <form onSubmit={handleReviewSubmit}>
+                <div className="mb-3">
+                    <label className="d-block mb-2">Rating:</label>
+                    <div className="star-rating mb-2">
+                        {[...Array(5)].map((_, index) => (
+                            <span 
+                                key={index}
+                                className={`star ${index < newReview.rating ? 'filled' : 'empty'}`}
+                                onClick={() => setNewReview({...newReview, rating: index + 1})}
+                                style={{ cursor: 'pointer', fontSize: '1.5rem' }}
+                            >
+                                {index < newReview.rating ? '★' : '☆'}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+                <div className="mb-3">
+                    <textarea 
+                        className="form-control"
+                        rows="3"
+                        value={newReview.comment}
+                        onChange={(e) => setNewReview({...newReview, comment: e.target.value})}
+                        placeholder="Give your review"
+                        required
+                    ></textarea>
+                </div>
+                <div className="mb-3">
+                    <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Your Name (Optional)"
+                        value={newReview.user || ''}
+                        onChange={(e) => setNewReview({...newReview, user: e.target.value})}
+                    />
+                </div>
+                <button type="submit" className="btn btn-primary">
+                    Submit Review
+                </button>
+            </form>
+        </div>
+    );
 
     if (loading) {
         return (
@@ -127,27 +212,27 @@ const ProductPage = ({ addToCart }) => {
                             <h3>Customer Reviews</h3>
                             <div className="mb-4">
                                 <div className="d-flex align-items-center mb-2">
-                                    <h4 className="mb-0 me-2">{product.rating.rate}</h4>
-                                    <div>{renderStars(product.rating.rate)}</div>
-                                    <span className="ms-2 text-muted">Based on {product.rating.count} reviews</span>
+                                    <h4 className="mb-0 me-2">{calculateAverageRating()}</h4>
+                                    <div>{renderStars(calculateAverageRating())}</div>
+                                    <span className="ms-2 text-muted">Based on {reviews.length} reviews</span>
                                 </div>
                             </div>
                             {reviews.map(review => (
-                                <div key={review.id} className="card mb-3">
-                                    <div className="card-body">
-                                        <div className="d-flex justify-content-between mb-2">
-                                            <div>
-                                                <strong>{review.user}</strong>
-                                                <div className="text-warning">
-                                                    {renderStars(review.rating)}
-                                                </div>
-                                            </div>
-                                            <small className="text-muted">{review.date}</small>
+                                <div key={review.id} className="review-item">
+                                    <div className="review-content">
+                                        <div className="review-rating">
+                                            {renderStars(review.rating)}
+                                            <span className="rating-text">(Rating: {review.rating})</span>
                                         </div>
-                                        <p className="card-text">{review.comment}</p>
+                                        <p className="review-text">{review.comment}</p>
+                                        <div className="review-meta">
+                                            <span className="review-author">{review.user}</span>
+                                            <span className="review-date">{review.date}</span>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
+                            {reviewForm}
                         </div>
                     </div>
                 </div>

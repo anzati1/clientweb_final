@@ -40,14 +40,18 @@ const HomePage = ({ addToCart, searchQuery }) => {
     };
 
     const renderStars = (rating) => {
-        return [...Array(5)].map((_, index) => (
-            <span 
-                key={index} 
-                className={`star ${index < Math.round(rating) ? 'filled' : 'empty'}`}
-            >
-                {index < Math.round(rating) ? '★' : '☆'}
-            </span>
-        ));
+        const stars = [];
+        for (let i = 0; i < 5; i++) {
+            stars.push(
+                <span 
+                    key={i} 
+                    className={i < Math.round(rating) ? "text-warning" : "text-muted"}
+                >
+                    ★
+                </span>
+            );
+        }
+        return stars;
     };
 
     const filteredProducts = products.filter(product => {
