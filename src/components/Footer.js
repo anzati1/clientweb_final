@@ -53,27 +53,6 @@ const Footer = () => {
                             </a>
                         </div>
                     </div>
-                    <div className="col-md-4">
-                        <h5 className="text-uppercase mb-3">Contact Info</h5>
-                        <ul className="list-unstyled">
-                            <li className="mb-2">
-                                <FontAwesomeIcon icon={faEnvelope} className="me-2" />
-                                <a href="mailto:contact@cststore.com" className="text-white text-decoration-none">
-                                    contact@cststore.com
-                                </a>
-                            </li>
-                            <li className="mb-2">
-                                <FontAwesomeIcon icon={faPhone} className="me-2" />
-                                <a href="tel:+15551234567" className="text-white text-decoration-none">
-                                    (555) 123-4567
-                                </a>
-                            </li>
-                            <li>
-                                <FontAwesomeIcon icon={faLocationDot} className="me-2" />
-                                123 Store Street, City, Country
-                            </li>
-                        </ul>
-                    </div>
                 </div>
                 <hr className="my-4" />
                 <div className="text-center">
