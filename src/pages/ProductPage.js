@@ -3,33 +3,20 @@ import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
 import './ProductPage.css';
 
+const getLocalReviews = (productId) => {
+    const localReviews = localStorage.getItem(`reviews_${productId}`);
+    return localReviews ? JSON.parse(localReviews) : [];
+};
+
+const saveLocalReviews = (productId, reviews) => {
+    localStorage.setItem(`reviews_${productId}`, JSON.stringify(reviews));
+};
+
 const ProductPage = ({ addToCart }) => {
     const { id } = useParams();
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [reviews, setReviews] = useState([
-        {
-            id: 1,
-            user: "John D.",
-            rating: 4,
-            comment: "Great product, exactly as described!",
-            date: "2024-02-15"
-        },
-        {
-            id: 2,
-            user: "Sarah M.",
-            rating: 5,
-            comment: "Excellent quality and fast shipping.",
-            date: "2024-02-10"
-        },
-        {
-            id: 3,
-            user: "Mike R.",
-            rating: 3,
-            comment: "Good product but delivery took longer than expected.",
-            date: "2024-02-05"
-        }
-    ]);
+    const [allReviews, setAllReviews] = useState([]);
     const [newReview, setNewReview] = useState({
         rating: 5,
         comment: ''
@@ -39,13 +26,14 @@ const ProductPage = ({ addToCart }) => {
         const fetchProduct = async () => {
             try {
                 const data = await api.getProductById(id);
-                data.originalPrice = (data.price * 1.2).toFixed(2);
-                data.availability = "In Stock";
-                data.qrCode = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=product" + data.id;
-                data.image = data.thumbnail || data.image;
+                // Combine API reviews with local reviews
+                const localReviews = getLocalReviews(id);
+                const combinedReviews = [...data.reviews || [], ...localReviews];
+                
                 setProduct(data);
+                setAllReviews(combinedReviews);
             } catch (error) {
-                console.error('Error fetching product:', error);
+                console.error('Error:', error);
             } finally {
                 setLoading(false);
             }
@@ -70,22 +58,30 @@ const ProductPage = ({ addToCart }) => {
 
     // Calculate average rating
     const calculateAverageRating = () => {
-        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
-        return (totalRating / reviews.length).toFixed(1);
+        const totalRating = allReviews.reduce((sum, review) => sum + review.rating, 0);
+        return (totalRating / allReviews.length).toFixed(1);
     };
 
     // Handle review submission
     const handleReviewSubmit = (e) => {
         e.preventDefault();
         const review = {
-            id: reviews.length + 1,
+            id: Date.now(),
             user: newReview.user || "Anonymous",
             rating: parseInt(newReview.rating),
             comment: newReview.comment,
-            date: new Date().toLocaleDateString()
+            date: new Date().toISOString(),
+            isLocal: true
         };
-        setReviews([...reviews, review]);
-        setNewReview({ rating: 1, comment: '', user: '' });
+
+        const updatedReviews = [...allReviews, review];
+        setAllReviews(updatedReviews);
+        
+        // Save to localStorage
+        const localReviews = getLocalReviews(id);
+        saveLocalReviews(id, [...localReviews, review]);
+        
+        setNewReview({ rating: 5, comment: '', user: '' });
     };
 
     // Add this helper function after renderStars
@@ -166,12 +162,19 @@ const ProductPage = ({ addToCart }) => {
         <div className="container py-4">
             <div className="row">
                 <div className="col-md-6">
-                    <img 
-                        src={product.thumbnail} 
-                        className="card-img-top p-3" 
-                        alt={product.title}
-                        style={{ height: '200px', objectFit: 'contain' }}
-                    />
+                    <div className="product-image-container">
+                        <img 
+                            src={product.thumbnail} 
+                            className="card-img-top p-3 zoom-image" 
+                            alt={product.title}
+                            onMouseMove={(e) => {
+                                const { left, top, width, height } = e.target.getBoundingClientRect();
+                                const x = (e.clientX - left) / width * 100;
+                                const y = (e.clientY - top) / height * 100;
+                                e.target.style.transformOrigin = `${x}% ${y}%`;
+                            }}
+                        />
+                    </div>
                 </div>
                 <div className="col-md-6">
                     <h1 className="mb-3">{product.title}</h1>
@@ -214,10 +217,10 @@ const ProductPage = ({ addToCart }) => {
                                 <div className="d-flex align-items-center mb-2">
                                     <h4 className="mb-0 me-2">{calculateAverageRating()}</h4>
                                     <div>{renderStars(calculateAverageRating())}</div>
-                                    <span className="ms-2 text-muted">Based on {reviews.length} reviews</span>
+                                    <span className="ms-2 text-muted">Based on {allReviews.length} reviews</span>
                                 </div>
                             </div>
-                            {reviews.map(review => (
+                            {allReviews.map(review => (
                                 <div key={review.id} className="review-item">
                                     <div className="review-content">
                                         <div className="review-rating">

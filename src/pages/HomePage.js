@@ -2,126 +2,155 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import './HomePage.css';
+import ProductCard from '../components/ProductCard';
 
 const HomePage = ({ addToCart, searchQuery }) => {
     const [products, setProducts] = useState([]);
+    const [filteredProducts, setFilteredProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [selectedCategory, setSelectedCategory] = useState('');
+    const [priceRange, setPriceRange] = useState({ min: 0, max: 2000 });
     const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchInitialData = async () => {
             try {
                 const [productsData, categoriesData] = await Promise.all([
-                    api.getAllProducts(),
-                    api.getCategories()
+                    api.getAllProducts(0, 20),
+                    api.getAllCategories()
                 ]);
-                const productsWithOriginalPrice = productsData.map(product => ({
-                    ...product,
-                    originalPrice: (product.price * 1.2).toFixed(2)
-                }));
-                const formattedCategories = categoriesData.map(category => 
-                    typeof category === 'object' ? category.name : category
-                );
-                setProducts(productsWithOriginalPrice);
-                setCategories(formattedCategories);
+                setProducts(productsData.products);
+                setFilteredProducts(productsData.products);
+                setCategories(categoriesData);
+                setHasMore(productsData.total > productsData.products.length);
             } catch (error) {
-                console.error('Error fetching data:', error);
+                console.error('Error:', error);
             } finally {
                 setLoading(false);
             }
         };
-        fetchData();
+        fetchInitialData();
     }, []);
 
-    const handleViewDetails = (productId) => {
-        navigate(`/product/${productId}`);
-    };
-
-    const renderStars = (rating) => {
-        const stars = [];
-        for (let i = 0; i < 5; i++) {
-            stars.push(
-                <span 
-                    key={i} 
-                    className={i < Math.round(rating) ? "text-warning" : "text-muted"}
-                >
-                    ★
-                </span>
+    useEffect(() => {
+        const filterProducts = () => {
+            let filtered = [...products];
+            
+            // Apply category filter
+            if (selectedCategory) {
+                filtered = filtered.filter(product => 
+                    typeof product.category === 'object' 
+                        ? product.category.name === selectedCategory
+                        : product.category === selectedCategory
+                );
+            }
+            
+            // Apply price range filter
+            filtered = filtered.filter(product => 
+                product.price >= priceRange.min && 
+                product.price <= priceRange.max
             );
+            
+            // Apply search query
+            if (searchQuery) {
+                filtered = filtered.filter(product =>
+                    product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    product.description.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+            }
+            
+            setFilteredProducts(filtered);
+        };
+        
+        filterProducts();
+    }, [products, selectedCategory, priceRange, searchQuery]);
+
+    const loadMore = async () => {
+        if (!hasMore) return;
+        
+        const nextPage = page + 1;
+        try {
+            const response = await api.getAllProducts(nextPage * 20, 20);
+            setProducts(prev => [...prev, ...response.products]);
+            setPage(nextPage);
+            setHasMore(response.total > (nextPage + 1) * 20);
+        } catch (error) {
+            console.error('Error loading more products:', error);
         }
-        return stars;
     };
-
-    const filteredProducts = products.filter(product => {
-        const matchesSearch = product.title.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesCategory = !selectedCategory || product.category === selectedCategory;
-        return matchesSearch && matchesCategory;
-    });
-
-    if (loading) {
-        return (
-            <div className="d-flex justify-content-center align-items-center" style={{ height: '60vh' }}>
-                <div className="spinner-border" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="container py-4">
-            <h2 className="mb-4">Products</h2>
             <div className="row mb-4">
                 <div className="col-md-3">
-                    <select
-                        className="form-select"
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                    >
-                        <option value="">All Categories</option>
-                        {categories.map((category, index) => (
-                            <option key={index} value={category}>
-                                {category}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-
-            <div className="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-                {filteredProducts.map(product => (
-                    <div key={product.id} className="col">
-                        <div className="product-card card h-100">
-                            <img 
-                                src={product.thumbnail} 
-                                className="card-img-top p-3" 
-                                alt={product.title}
-                                style={{ height: '200px', objectFit: 'contain' }}
-                            />
-                            <div className="card-body d-flex flex-column">
-                                <h5 className="card-title product-title">{product.title}</h5>
-                                <div className="rating mb-2">
-                                    {renderStars(product.rating)}
-                                    <span className="text-muted ms-2">({product.stock} in stock)</span>
-                                </div>
-                                <div className="price-section mb-3">
-                                    <span className="text-success me-2">${product.price.toFixed(2)}</span>
-                                    <span className="text-decoration-line-through text-muted">${product.originalPrice}</span>
-                                </div>
-                                <div className="mt-auto">
-                                    <button 
-                                        className="btn btn-outline-primary w-100"
-                                        onClick={() => handleViewDetails(product.id)}
+                    <div className="filter-section">
+                        <h4>Filters</h4>
+                        <div className="mb-3">
+                            <label className="form-label">Category</label>
+                            <select 
+                                className="form-select"
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
+                            >
+                                <option value="">All Categories</option>
+                                {categories.map(category => (
+                                    <option 
+                                        key={typeof category === 'string' ? category : category.name} 
+                                        value={typeof category === 'string' ? category : category.name}
                                     >
-                                        View Details
-                                    </button>
-                                </div>
+                                        {typeof category === 'string' ? category : category.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="mb-3">
+                            <label className="form-label">Price Range</label>
+                            <div className="d-flex gap-2">
+                                <input
+                                    type="number"
+                                    className="form-control"
+                                    placeholder="Min"
+                                    value={priceRange.min}
+                                    onChange={(e) => setPriceRange(prev => ({
+                                        ...prev,
+                                        min: Number(e.target.value)
+                                    }))}
+                                />
+                                <input
+                                    type="number"
+                                    className="form-control"
+                                    placeholder="Max"
+                                    value={priceRange.max}
+                                    onChange={(e) => setPriceRange(prev => ({
+                                        ...prev,
+                                        max: Number(e.target.value)
+                                    }))}
+                                />
                             </div>
                         </div>
                     </div>
-                ))}
+                </div>
+                <div className="col-md-9">
+                    <div className="row row-cols-1 row-cols-md-3 g-4">
+                        {filteredProducts.map(product => (
+                            <div key={product.id} className="col">
+                                <ProductCard product={product} addToCart={addToCart} />
+                            </div>
+                        ))}
+                    </div>
+                    {hasMore && (
+                        <div className="text-center mt-4">
+                            <button 
+                                className="btn btn-primary"
+                                onClick={loadMore}
+                            >
+                                Load More
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
