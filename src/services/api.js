@@ -6,44 +6,41 @@ const axiosInstance = axios.create({
     baseURL: BASE_URL,
     headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    },
-    timeout: 10000
+    }
 });
 
-axiosInstance.interceptors.response.use(
-    response => response,
-    error => {
-        console.error('API Error:', error);
-        if (error.code === 'ECONNABORTED') {
-            return Promise.reject(new Error('Request timed out'));
-        }
-        return Promise.reject(error);
-    }
-);
-
 export const api = {
-    getAllProducts: async () => {
+    getAllProducts: async (skip = 0, limit = 20) => {
         try {
-            const response = await axiosInstance.get('/products');
-            return response.data.products;
+            const response = await axiosInstance.get(`/products?skip=${skip}&limit=${limit}`);
+            return response.data;
         } catch (error) {
             console.error('Error fetching products:', error);
             throw error;
         }
     },
 
-    getProductById: async (id) => {
+    searchProducts: async (query) => {
         try {
-            const response = await axiosInstance.get(`/products/${id}`);
+            const response = await axiosInstance.get(`/products/search?q=${query}`);
             return response.data;
         } catch (error) {
-            console.error(`Error fetching product ${id}:`, error);
+            console.error('Error searching products:', error);
             throw error;
         }
     },
 
-    getCategories: async () => {
+    getProductsByCategory: async (category) => {
+        try {
+            const response = await axiosInstance.get(`/products/category/${category}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching category products:', error);
+            throw error;
+        }
+    },
+
+    getAllCategories: async () => {
         try {
             const response = await axiosInstance.get('/products/categories');
             return response.data;
@@ -53,12 +50,12 @@ export const api = {
         }
     },
 
-    getProductsByCategory: async (category) => {
+    getProductById: async (id) => {
         try {
-            const response = await axiosInstance.get(`/products/category/${category}`);
-            return response.data.products;
+            const response = await axiosInstance.get(`/products/${id}`);
+            return response.data;
         } catch (error) {
-            console.error(`Error fetching products in category ${category}:`, error);
+            console.error('Error fetching product:', error);
             throw error;
         }
     }
