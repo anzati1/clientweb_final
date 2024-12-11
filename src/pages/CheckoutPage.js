@@ -1,224 +1,235 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const CheckoutPage = ({ cart }) => {
+const CheckoutPage = ({ cart, clearCart }) => {
     const navigate = useNavigate();
-    const [step, setStep] = useState(1);
     const [shippingInfo, setShippingInfo] = useState({
-        name: '',
+        fullName: '',
         address: '',
         city: '',
-        province: '',
+        province: 'QC',
         postalCode: ''
     });
+
+    const [paymentInfo, setPaymentInfo] = useState({
+        cardNumber: '',
+        expiryDate: '',
+        cvv: '',
+        cardholderName: ''
+    });
+
     const [paymentMethod, setPaymentMethod] = useState('credit');
 
-    // Calculate subtotal from cart
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    
-    // Calculate taxes based on province
-    const calculateTaxes = () => {
-        const gst = subtotal * 0.05; // 5% GST
-        const qst = shippingInfo.province.toUpperCase() === 'QC' ? subtotal * 0.09975 : 0; // 9.975% QST for Quebec
-        return { gst, qst };
-    };
-
-    const { gst, qst } = calculateTaxes();
+    const gst = subtotal * 0.05;
+    const qst = subtotal * 0.09975;
     const total = subtotal + gst + qst;
 
-    const handleShippingSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Validate all shipping fields are filled
-        if (Object.values(shippingInfo).every(value => value.trim() !== '')) {
-            setStep(2);
-        }
-    };
-
-    const handlePaymentSubmit = (e) => {
-        e.preventDefault();
-        setStep(3);
-    };
-
-    const handleOrderConfirm = () => {
-        if (cart.length === 0) {
-            alert('Your cart is empty!');
-            return;
-        }
         
-        navigate('/order-confirmation', { 
-            state: { 
-                orderDetails: {
-                    items: cart,
-                    shipping: shippingInfo,
-                    payment: paymentMethod,
-                    subtotal,
-                    gst,
-                    qst,
-                    total
-                }
-            }
-        });
+        try {
+            const processingMessage = document.getElementById('processingMessage');
+            processingMessage.style.display = 'block';
+
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const orderDetails = {
+                orderNumber: Math.floor(Math.random() * 1000000),
+                shippingInfo,
+                paymentMethod,
+                subtotal,
+                gst,
+                qst,
+                total,
+                items: cart
+            };
+            localStorage.setItem('lastOrder', JSON.stringify(orderDetails));
+
+            clearCart();
+            
+            navigate('/order-confirmation');
+        } catch (error) {
+            alert('Payment processing failed. Please try again.');
+        }
     };
 
     return (
         <div className="container py-4">
+            <h2 className="mb-4">Checkout</h2>
             <div className="row">
                 <div className="col-md-8">
-                    {step === 1 && (
-                        <div className="card">
+                    <form onSubmit={handleSubmit}>
+                        {/* Shipping Information */}
+                        <div className="card mb-4">
                             <div className="card-body">
                                 <h3 className="card-title mb-4">Shipping Information</h3>
-                                <form onSubmit={handleShippingSubmit}>
-                                    <div className="mb-3">
-                                        <label className="form-label">Full Name</label>
+                                <div className="mb-3">
+                                    <label className="form-label">Full Name</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        required
+                                        value={shippingInfo.fullName}
+                                        onChange={(e) => setShippingInfo({
+                                            ...shippingInfo,
+                                            fullName: e.target.value
+                                        })}
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Street Address</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        required
+                                        value={shippingInfo.address}
+                                        onChange={(e) => setShippingInfo({
+                                            ...shippingInfo,
+                                            address: e.target.value
+                                        })}
+                                    />
+                                </div>
+                                <div className="row">
+                                    <div className="col-md-6 mb-3">
+                                        <label className="form-label">City</label>
                                         <input
                                             type="text"
                                             className="form-control"
                                             required
-                                            value={shippingInfo.name}
+                                            value={shippingInfo.city}
                                             onChange={(e) => setShippingInfo({
                                                 ...shippingInfo,
-                                                name: e.target.value
+                                                city: e.target.value
                                             })}
                                         />
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Street Address</label>
+                                    <div className="col-md-3 mb-3">
+                                        <label className="form-label">Province</label>
+                                        <select
+                                            className="form-select"
+                                            value={shippingInfo.province}
+                                            onChange={(e) => setShippingInfo({
+                                                ...shippingInfo,
+                                                province: e.target.value
+                                            })}
+                                        >
+                                            <option value="QC">Quebec</option>
+                                            <option value="ON">Ontario</option>
+                                            <option value="BC">British Columbia</option>
+                                            {/* Add other provinces */}
+                                        </select>
+                                    </div>
+                                    <div className="col-md-3 mb-3">
+                                        <label className="form-label">Postal Code</label>
                                         <input
                                             type="text"
                                             className="form-control"
                                             required
-                                            value={shippingInfo.address}
+                                            value={shippingInfo.postalCode}
                                             onChange={(e) => setShippingInfo({
                                                 ...shippingInfo,
-                                                address: e.target.value
+                                                postalCode: e.target.value
                                             })}
                                         />
                                     </div>
-                                    <div className="row mb-3">
-                                        <div className="col">
-                                            <label className="form-label">City</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                required
-                                                value={shippingInfo.city}
-                                                onChange={(e) => setShippingInfo({
-                                                    ...shippingInfo,
-                                                    city: e.target.value
-                                                })}
-                                            />
-                                        </div>
-                                        <div className="col">
-                                            <label className="form-label">Province</label>
-                                            <select
-                                                className="form-select"
-                                                required
-                                                value={shippingInfo.province}
-                                                onChange={(e) => setShippingInfo({
-                                                    ...shippingInfo,
-                                                    province: e.target.value
-                                                })}
-                                            >
-                                                <option value="">Select Province</option>
-                                                <option value="QC">Quebec</option>
-                                                <option value="ON">Ontario</option>
-                                                <option value="BC">British Columbia</option>
-                                                {/* Add other provinces */}
-                                            </select>
-                                        </div>
-                                        <div className="col">
-                                            <label className="form-label">Postal Code</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                required
-                                                value={shippingInfo.postalCode}
-                                                onChange={(e) => setShippingInfo({
-                                                    ...shippingInfo,
-                                                    postalCode: e.target.value
-                                                })}
-                                            />
-                                        </div>
-                                    </div>
-                                    <button type="submit" className="btn btn-primary">
-                                        Continue to Payment
-                                    </button>
-                                </form>
+                                </div>
                             </div>
                         </div>
-                    )}
 
-                    {step === 2 && (
-                        <div className="card">
+                        {/* Payment Method */}
+                        <div className="card mb-4">
                             <div className="card-body">
                                 <h3 className="card-title mb-4">Payment Method</h3>
-                                <form onSubmit={handlePaymentSubmit}>
-                                    <div className="mb-4">
-                                        <div className="form-check mb-2">
-                                            <input
-                                                type="radio"
-                                                className="form-check-input"
-                                                name="paymentMethod"
-                                                id="credit"
-                                                value="credit"
-                                                checked={paymentMethod === 'credit'}
-                                                onChange={(e) => setPaymentMethod(e.target.value)}
-                                            />
-                                            <label className="form-check-label" htmlFor="credit">
-                                                Credit Card
-                                            </label>
-                                        </div>
-                                        <div className="form-check mb-2">
-                                            <input
-                                                type="radio"
-                                                className="form-check-input"
-                                                name="paymentMethod"
-                                                id="paypal"
-                                                value="paypal"
-                                                checked={paymentMethod === 'paypal'}
-                                                onChange={(e) => setPaymentMethod(e.target.value)}
-                                            />
-                                            <label className="form-check-label" htmlFor="paypal">
-                                                PayPal
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <button type="submit" className="btn btn-primary">
-                                        Review Order
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    )}
+                                <div className="mb-3">
+                                    <select
+                                        className="form-select"
+                                        value={paymentMethod}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    >
+                                        <option value="credit">Credit Card</option>
+                                        <option value="debit">Debit Card</option>
+                                        <option value="paypal">PayPal</option>
+                                    </select>
+                                </div>
 
-                    {step === 3 && (
-                        <div className="card">
-                            <div className="card-body">
-                                <h3 className="card-title mb-4">Order Review</h3>
-                                <div className="mb-4">
-                                    <h5>Shipping Address</h5>
-                                    <p>
-                                        {shippingInfo.name}<br />
-                                        {shippingInfo.address}<br />
-                                        {shippingInfo.city}, {shippingInfo.province} {shippingInfo.postalCode}
-                                    </p>
-                                </div>
-                                <div className="mb-4">
-                                    <h5>Payment Method</h5>
-                                    <p>{paymentMethod === 'credit' ? 'Credit Card' : 'PayPal'}</p>
-                                </div>
-                                <button 
-                                    className="btn btn-primary"
-                                    onClick={handleOrderConfirm}
-                                >
-                                    Place Order
-                                </button>
+                                {paymentMethod === 'credit' || paymentMethod === 'debit' ? (
+                                    <>
+                                        <div className="mb-3">
+                                            <label className="form-label">Card Number</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                required
+                                                maxLength="16"
+                                                value={paymentInfo.cardNumber}
+                                                onChange={(e) => setPaymentInfo({
+                                                    ...paymentInfo,
+                                                    cardNumber: e.target.value.replace(/\D/g, '')
+                                                })}
+                                            />
+                                        </div>
+                                        <div className="row">
+                                            <div className="col-md-6 mb-3">
+                                                <label className="form-label">Expiry Date</label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    placeholder="MM/YY"
+                                                    required
+                                                    maxLength="5"
+                                                    value={paymentInfo.expiryDate}
+                                                    onChange={(e) => setPaymentInfo({
+                                                        ...paymentInfo,
+                                                        expiryDate: e.target.value
+                                                    })}
+                                                />
+                                            </div>
+                                            <div className="col-md-6 mb-3">
+                                                <label className="form-label">CVV</label>
+                                                <input
+                                                    type="text"
+                                                    className="form-control"
+                                                    required
+                                                    maxLength="3"
+                                                    value={paymentInfo.cvv}
+                                                    onChange={(e) => setPaymentInfo({
+                                                        ...paymentInfo,
+                                                        cvv: e.target.value.replace(/\D/g, '')
+                                                    })}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="mb-3">
+                                            <label className="form-label">Cardholder Name</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                required
+                                                value={paymentInfo.cardholderName}
+                                                onChange={(e) => setPaymentInfo({
+                                                    ...paymentInfo,
+                                                    cardholderName: e.target.value
+                                                })}
+                                            />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <p className="text-muted">You will be redirected to PayPal to complete your payment.</p>
+                                )}
                             </div>
                         </div>
-                    )}
+
+                        <button type="submit" className="btn btn-primary btn-lg w-100">
+                            Place Order
+                        </button>
+                        <div id="processingMessage" style={{ display: 'none' }} className="alert alert-info mt-3">
+                            Processing your payment...
+                        </div>
+                    </form>
                 </div>
 
+                {/* Order Summary */}
                 <div className="col-md-4">
                     <div className="card">
                         <div className="card-body">

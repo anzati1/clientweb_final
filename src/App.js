@@ -60,6 +60,10 @@ function App() {
 
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  const clearCart = () => {
+    setCart([]);
+  };
+
   return (
     <Router>
       <div className="App d-flex flex-column min-vh-100">
@@ -84,7 +88,7 @@ function App() {
                 />
               } 
             />
-            <Route path="/checkout" element={<CheckoutPage cart={cart} />} />
+            <Route path="/checkout" element={<CheckoutPage cart={cart} clearCart={clearCart} />} />
             <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
           </Routes>
         </main>

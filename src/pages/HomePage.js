@@ -38,7 +38,6 @@ const HomePage = ({ addToCart, searchQuery }) => {
         const filterProducts = () => {
             let filtered = [...products];
             
-            // Apply category filter
             if (selectedCategory) {
                 filtered = filtered.filter(product => 
                     typeof product.category === 'object' 
@@ -47,13 +46,11 @@ const HomePage = ({ addToCart, searchQuery }) => {
                 );
             }
             
-            // Apply price range filter
             filtered = filtered.filter(product => 
                 product.price >= priceRange.min && 
                 product.price <= priceRange.max
             );
             
-            // Apply search query
             if (searchQuery) {
                 filtered = filtered.filter(product =>
                     product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

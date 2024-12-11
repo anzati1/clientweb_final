@@ -31,7 +31,7 @@ const CartPage = ({ cart, updateQuantity, removeFromCart }) => {
                             <div className="row g-0">
                                 <div className="col-md-3">
                                     <img 
-                                        src={item.image} 
+                                        src={item.thumbnail} 
                                         className="img-fluid p-2" 
                                         alt={item.title}
                                         style={{ height: '150px', objectFit: 'contain' }}
@@ -41,7 +41,11 @@ const CartPage = ({ cart, updateQuantity, removeFromCart }) => {
                                     <div className="card-body">
                                         <h5 className="card-title">{item.title}</h5>
                                         <p className="card-text">
-                                            <small className="text-muted">{item.category}</small>
+                                            <small className="text-muted">
+                                                {typeof item.category === 'string' 
+                                                    ? item.category.charAt(0).toUpperCase() + item.category.slice(1)
+                                                    : item.category.name.charAt(0).toUpperCase() + item.category.name.slice(1)}
+                                            </small>
                                         </p>
                                         <div className="d-flex justify-content-between align-items-center">
                                             <div className="input-group" style={{ width: '130px' }}>

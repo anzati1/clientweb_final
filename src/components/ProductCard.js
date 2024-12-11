@@ -2,6 +2,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const ProductCard = ({ product, addToCart }) => {
+    const formatCategory = (category) => {
+        if (typeof category === 'string') {
+            return category.charAt(0).toUpperCase() + category.slice(1);
+        }
+        return category.name.charAt(0).toUpperCase() + category.name.slice(1);
+    };
+
     return (
         <div className="card h-100 product-card">
             <img 
@@ -12,7 +19,9 @@ const ProductCard = ({ product, addToCart }) => {
             />
             <div className="card-body d-flex flex-column">
                 <h5 className="card-title product-title">{product.title}</h5>
-                <p className="card-text text-muted mb-2">{product.category}</p>
+                <p className="card-text text-muted mb-2">
+                    {formatCategory(product.category)}
+                </p>
                 <div className="rating mb-2">
                     {[...Array(5)].map((_, i) => (
                         <span key={i} className={`star ${i < Math.round(product.rating) ? 'filled' : ''}`}>★</span>
