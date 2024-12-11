@@ -26,7 +26,6 @@ const ProductPage = ({ addToCart }) => {
         const fetchProduct = async () => {
             try {
                 const data = await api.getProductById(id);
-                // Combine API reviews with local reviews
                 const localReviews = getLocalReviews(id);
                 const combinedReviews = [...data.reviews || [], ...localReviews];
                 
@@ -42,27 +41,23 @@ const ProductPage = ({ addToCart }) => {
     }, [id]);
 
     const renderStars = (rating) => {
-        const stars = [];
-        for (let i = 0; i < 5; i++) {
-            stars.push(
-                <span 
-                    key={i} 
-                    className={i < Math.round(rating) ? "text-warning" : "text-muted"}
-                >
-                    ★
-                </span>
-            );
-        }
-        return stars;
+        return [...Array(5)].map((_, index) => (
+            <span 
+                key={index}
+                className={`star ${index < Math.round(rating) ? 'filled' : 'empty'}`}
+                style={{ color: index < Math.round(rating) ? '#ffc107' : '#e4e5e9' }}
+            >
+                ★
+            </span>
+        ));
     };
 
-    // Calculate average rating
     const calculateAverageRating = () => {
+        if (allReviews.length === 0) return 0;
         const totalRating = allReviews.reduce((sum, review) => sum + review.rating, 0);
-        return (totalRating / allReviews.length).toFixed(1);
+        return Number((totalRating / allReviews.length).toFixed(1));
     };
 
-    // Handle review submission
     const handleReviewSubmit = (e) => {
         e.preventDefault();
         const review = {
@@ -77,14 +72,12 @@ const ProductPage = ({ addToCart }) => {
         const updatedReviews = [...allReviews, review];
         setAllReviews(updatedReviews);
         
-        // Save to localStorage
         const localReviews = getLocalReviews(id);
         saveLocalReviews(id, [...localReviews, review]);
         
         setNewReview({ rating: 5, comment: '', user: '' });
     };
 
-    // Add this helper function after renderStars
     const renderEmptyStars = (onClick) => {
         return [...Array(5)].map((_, index) => (
             <span 
@@ -98,7 +91,6 @@ const ProductPage = ({ addToCart }) => {
         ));
     };
 
-    // Replace the existing reviewForm with this updated version
     const reviewForm = (
         <div className="mt-4">
             <h4>Leave a Review</h4>
@@ -144,6 +136,10 @@ const ProductPage = ({ addToCart }) => {
         </div>
     );
 
+    const generateQRValue = (product) => {
+        return `${window.location.origin}/product/${product.id}`;
+    };
+
     if (loading) {
         return (
             <div className="d-flex justify-content-center align-items-center" style={{ height: '60vh' }}>
@@ -178,16 +174,32 @@ const ProductPage = ({ addToCart }) => {
                 </div>
                 <div className="col-md-6">
                     <h1 className="mb-3">{product.title}</h1>
+                    <p className="text-muted mb-2">
+                        Category: {
+                            typeof product.category === 'string'
+                                ? product.category.charAt(0).toUpperCase() + product.category.slice(1)
+                                : product.category.name.charAt(0).toUpperCase() + product.category.name.slice(1)
+                        }
+                    </p>
                     <p className="text-muted mb-4">{product.description}</p>
                     
                     <div className="mb-3">
-                        <span className="text-decoration-line-through text-muted me-2">${product.originalPrice}</span>
+                        <span className="text-decoration-line-through text-muted me-2">
+                            ${(product.price * 1.2).toFixed(2)}
+                        </span>
                         <span className="h3 text-primary">${product.price.toFixed(2)}</span>
                     </div>
 
                     <div className="mb-3">
-                        {renderStars(product.rating.rate)}
-                        <span className="ms-2 text-muted">({product.rating.count} reviews)</span>
+                        <div className="d-flex align-items-center">
+                            {renderStars(calculateAverageRating())}
+                            <span className="ms-2">
+                                {calculateAverageRating()} out of 5
+                            </span>
+                            <span className="ms-2 text-muted">
+                                ({allReviews.length} {allReviews.length === 1 ? 'review' : 'reviews'})
+                            </span>
+                        </div>
                     </div>
 
                     <div className="mb-4">
@@ -221,17 +233,27 @@ const ProductPage = ({ addToCart }) => {
                                 </div>
                             </div>
                             {allReviews.map(review => (
-                                <div key={review.id} className="review-item">
-                                    <div className="review-content">
-                                        <div className="review-rating">
-                                            {renderStars(review.rating)}
-                                            <span className="rating-text">(Rating: {review.rating})</span>
+                                <div key={review.id} className="card mb-3">
+                                    <div className="card-body">
+                                        <div className="d-flex justify-content-between align-items-center mb-2">
+                                            <div>
+                                                {renderStars(review.rating)}
+                                                <span className="ms-2 text-muted">
+                                                    {review.rating}/5
+                                                </span>
+                                            </div>
+                                            <small className="text-muted">
+                                                {new Date(review.date).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                })}
+                                            </small>
                                         </div>
-                                        <p className="review-text">{review.comment}</p>
-                                        <div className="review-meta">
-                                            <span className="review-author">{review.user}</span>
-                                            <span className="review-date">{review.date}</span>
-                                        </div>
+                                        <p className="card-text mb-2">{review.comment}</p>
+                                        <footer className="text-muted">
+                                            <small>By {review.user || 'Anonymous'}</small>
+                                        </footer>
                                     </div>
                                 </div>
                             ))}

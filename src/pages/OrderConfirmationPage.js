@@ -1,65 +1,97 @@
-import React from 'react';
-import { Link, useLocation, Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const OrderConfirmationPage = () => {
-    const { state } = useLocation();
-    
-    if (!state || !state.orderDetails) {
-        return <Navigate to="/" replace />;
+    const [orderDetails, setOrderDetails] = useState(null);
+
+    useEffect(() => {
+        const details = localStorage.getItem('lastOrder');
+        if (details) {
+            setOrderDetails(JSON.parse(details));
+        }
+    }, []);
+
+    if (!orderDetails) {
+        return (
+            <div className="container py-5 text-center">
+                <h2>No order details found</h2>
+                <Link to="/" className="btn btn-primary mt-3">Return to Home</Link>
+            </div>
+        );
     }
 
-    const { orderDetails } = state;
-    
     return (
         <div className="container py-5">
             <div className="card">
                 <div className="card-body">
                     <div className="text-center mb-4">
-                        <h2 className="card-title">Thank You for Your Order!</h2>
-                        <p className="text-muted">Your order has been confirmed</p>
+                        <h2 className="text-success mb-3">Order Confirmed!</h2>
+                        <p className="lead">Thank you for your purchase</p>
+                        <p className="text-muted">Order #{orderDetails.orderNumber}</p>
                     </div>
 
                     <div className="row">
                         <div className="col-md-6 mb-4">
-                            <h5>Shipping Address</h5>
+                            <h4>Shipping Address</h4>
                             <p>
-                                {orderDetails.shipping.name}<br />
-                                {orderDetails.shipping.address}<br />
-                                {orderDetails.shipping.city}, {orderDetails.shipping.province}<br />
-                                {orderDetails.shipping.postalCode}
+                                {orderDetails.shippingInfo.fullName}<br />
+                                {orderDetails.shippingInfo.address}<br />
+                                {orderDetails.shippingInfo.city}, {orderDetails.shippingInfo.province}<br />
+                                {orderDetails.shippingInfo.postalCode}
                             </p>
                         </div>
                         <div className="col-md-6 mb-4">
-                            <h5>Payment Method</h5>
-                            <p>{orderDetails.payment === 'credit' ? 'Credit Card' : 'PayPal'}</p>
+                            <h4>Payment Method</h4>
+                            <p>{orderDetails.paymentMethod === 'credit' 
+                                ? 'Credit Card' 
+                                : orderDetails.paymentMethod === 'debit' 
+                                    ? 'Debit Card' 
+                                    : 'PayPal'}</p>
                         </div>
                     </div>
 
-                    <h5>Order Summary</h5>
-                    {orderDetails.items.map(item => (
-                        <div key={item.id} className="d-flex justify-content-between align-items-center mb-2">
-                            <span>{item.title} × {item.quantity}</span>
-                            <span>${(item.price * item.quantity).toFixed(2)}</span>
-                        </div>
-                    ))}
-                    <hr />
-                    <div className="d-flex justify-content-between mb-2">
-                        <span>Subtotal</span>
-                        <span>${orderDetails.subtotal.toFixed(2)}</span>
+                    <h4>Order Summary</h4>
+                    <div className="table-responsive mb-4">
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Quantity</th>
+                                    <th className="text-end">Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {orderDetails.items.map(item => (
+                                    <tr key={item.id}>
+                                        <td>{item.title}</td>
+                                        <td>{item.quantity}</td>
+                                        <td className="text-end">${(item.price * item.quantity).toFixed(2)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
-                    <div className="d-flex justify-content-between mb-2">
-                        <span>GST (5%)</span>
-                        <span>${orderDetails.gst.toFixed(2)}</span>
-                    </div>
-                    {orderDetails.qst > 0 && (
-                        <div className="d-flex justify-content-between mb-2">
-                            <span>QST (9.975%)</span>
-                            <span>${orderDetails.qst.toFixed(2)}</span>
+
+                    <div className="row justify-content-end">
+                        <div className="col-md-4">
+                            <div className="d-flex justify-content-between mb-2">
+                                <span>Subtotal</span>
+                                <span>${orderDetails.subtotal.toFixed(2)}</span>
+                            </div>
+                            <div className="d-flex justify-content-between mb-2">
+                                <span>GST (5%)</span>
+                                <span>${orderDetails.gst.toFixed(2)}</span>
+                            </div>
+                            <div className="d-flex justify-content-between mb-2">
+                                <span>QST (9.975%)</span>
+                                <span>${orderDetails.qst.toFixed(2)}</span>
+                            </div>
+                            <hr />
+                            <div className="d-flex justify-content-between">
+                                <strong>Total</strong>
+                                <strong>${orderDetails.total.toFixed(2)}</strong>
+                            </div>
                         </div>
-                    )}
-                    <div className="d-flex justify-content-between mt-3">
-                        <span className="h5">Total</span>
-                        <span className="h5">${orderDetails.total.toFixed(2)}</span>
                     </div>
 
                     <div className="text-center mt-4">
